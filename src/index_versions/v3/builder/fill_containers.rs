@@ -53,6 +53,8 @@ pub fn fill_containers(
                     &normalized_word,
                 );
 
+                fill_other_containers_alias_maps_with_fuzzy_matches(containers, &normalized_word);
+
                 // Step 2C: Fill _other containers'_ alias maps with the
                 // reverse-stems of this word
                 fill_other_containers_alias_maps_with_reverse_stems(
@@ -108,14 +110,35 @@ fn fill_other_containers_alias_maps_with_prefixes(
     for n in substring_max_length_range {
         let substring: String = chars[0..n].iter().collect();
 
-        let alises_map = &mut containers
+        let aliases_map = &mut containers
             .entry(substring.clone())
             .or_insert_with(Container::new)
             .aliases;
 
-        let _alias_score = alises_map
+        let _alias_score = aliases_map
             .entry(normalized_word.to_string())
             .or_insert(PREFIX_SCORE - ((chars.len() - n).try_into().unwrap_or(0)));
+    }
+}
+
+fn fill_other_containers_alias_maps_with_fuzzy_matches(
+    containers: &mut HashMap<String, Container>,
+    normalized_word: &str,
+) {
+    let chars: Vec<char> = normalized_word.chars().collect();
+    for n in 0..chars.len() {
+        let mut fuzzy_chars = chars.clone();
+        fuzzy_chars.remove(n);
+        let fuzzy_word: String = fuzzy_chars.iter().collect();
+
+        let aliases_map = &mut containers
+            .entry(fuzzy_word.clone())
+            .or_insert_with(Container::new)
+            .aliases;
+
+        let _alias_score = aliases_map
+            .entry(normalized_word.to_string())
+            .or_insert(PREFIX_SCORE - 1);
     }
 }
 
