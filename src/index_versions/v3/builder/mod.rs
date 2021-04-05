@@ -15,6 +15,8 @@ pub mod errors;
 pub mod intermediate_entry;
 mod word_list_generators;
 
+mod reverse_levenshtein;
+
 use colored::Colorize;
 use fill_containers::fill_containers;
 use fill_intermediate_entries::fill_intermediate_entries;
