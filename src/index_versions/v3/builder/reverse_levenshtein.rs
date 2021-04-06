@@ -3,15 +3,28 @@ use Transformation::*;
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum Transformation {
     Noop,
-    Insert,
+    Insert(char),
     Delete,
-    Replace,
+    Replace(char),
 }
 
 impl Transformation {
-    pub fn iterator() -> Iter<'static, Transformation> {
-        static DIRECTIONS: [Transformation; 4] = [Noop, Insert, Delete, Replace];
-        DIRECTIONS.iter()
+    pub fn all() -> Vec<Transformation> {
+        let letters: Vec<char> = (b'a'..=b'z').map(|byte| char::from(byte)).collect();
+        let mut insertions: Vec<Transformation> = letters
+            .clone()
+            .into_iter()
+            .map(|char| Insert(char))
+            .collect();
+        let mut replacements: Vec<Transformation> = letters
+            .clone()
+            .into_iter()
+            .map(|char| Replace(char))
+            .collect();
+        let mut all = vec![Noop, Delete];
+        all.append(&mut insertions);
+        all.append(&mut replacements);
+        all
     }
 }
 
@@ -37,14 +50,13 @@ fn r_add_transformation(
     collection: &mut Vec<Vec<Transformation>>,
 ) {
     if get_distance(&substring) == thresh || &offset == &substring.len() {
-        println!("24 {} - {:?}", get_distance(&substring), substring);
         collection.push(substring);
         return;
     }
 
-    for t in Transformation::iterator() {
+    for t in Transformation::all() {
         let mut new_substring = substring.clone();
-        replace_in_vec(&mut new_substring, offset, *t);
+        replace_in_vec(&mut new_substring, offset, t);
         r_add_transformation(new_substring, offset + 1, thresh, collection);
     }
 }
@@ -61,12 +73,45 @@ fn generate_transformations(len: usize, thresh: u8) -> Vec<Vec<Transformation>> 
     transformations
 }
 
+fn transform_word(word: &str, transformations: &Vec<Vec<Transformation>>) -> Vec<String> {
+    let mut transformed_words: Vec<String> = vec![];
+    for word_transformation in transformations {
+        let mut transformed: Vec<char> = word.clone().chars().collect();
+        for index in 0..transformed.len() {
+            if let Some(letter_transformation) = word_transformation.get(index) {
+                match letter_transformation {
+                    Noop => continue,
+                    Insert(value) => transformed.insert(index, *value),
+                    Delete => {
+                        if let Some(_) = transformed.get(index) {
+                            transformed.remove(index);
+                        }
+                    }
+                    Replace(value) => {
+                        if let Some(_) = transformed.get(index) {
+                            transformed.remove(index);
+                            transformed.insert(index, *value)
+                        }
+                    }
+                }
+            }
+        }
+        transformed_words.push(transformed.into_iter().collect())
+    }
+
+    transformed_words.dedup();
+    transformed_words
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn generate_transformations_test() {
-        println!("{:?}", generate_transformations(8, 2).len());
+        let transformations = generate_transformations(8, 2);
+        let words = transform_word("liberty", &transformations);
+        println!("{:?}", &transformations.len());
+        println!("{:?}\nLen: {}", words, words.len());
     }
 }
