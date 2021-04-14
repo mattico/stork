@@ -1,6 +1,7 @@
 use super::{
     super::scores::{PREFIX_SCORE, STEM_SCORE},
     annotated_words_from_string::AnnotatedWordable,
+    reverse_levenshtein,
 };
 
 use super::{
@@ -125,12 +126,11 @@ fn fill_other_containers_alias_maps_with_fuzzy_matches(
     containers: &mut HashMap<String, Container>,
     normalized_word: &str,
 ) {
-    let chars: Vec<char> = normalized_word.chars().collect();
-    for n in 0..chars.len() {
-        let mut fuzzy_chars = chars.clone();
-        fuzzy_chars.remove(n);
-        let fuzzy_word: String = fuzzy_chars.iter().collect();
-
+    let fuzzies = reverse_levenshtein::transform_word(
+        normalized_word,
+        &reverse_levenshtein::generate_transformations(normalized_word.len(), 1),
+    );
+    for fuzzy_word in fuzzies {
         let aliases_map = &mut containers
             .entry(fuzzy_word.clone())
             .or_insert_with(Container::new)
