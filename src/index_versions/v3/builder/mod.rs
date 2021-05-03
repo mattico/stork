@@ -13,8 +13,6 @@ mod annotated_words_from_string;
 pub mod errors;
 pub mod intermediate_entry;
 
-mod reverse_levenshtein;
-
 use colored::Colorize;
 use fill_containers::fill_containers;
 use fill_intermediate_entries::fill_intermediate_entries;
