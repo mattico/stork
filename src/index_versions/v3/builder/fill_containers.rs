@@ -1,7 +1,6 @@
 use super::{
     super::scores::{PREFIX_SCORE, STEM_SCORE},
     annotated_words_from_string::AnnotatedWordable,
-    reverse_levenshtein,
 };
 
 use super::{
@@ -53,8 +52,6 @@ pub fn fill_containers(
                     containers,
                     &normalized_word,
                 );
-
-                fill_other_containers_alias_maps_with_fuzzy_matches(containers, &normalized_word);
 
                 // Step 2C: Fill _other containers'_ alias maps with the
                 // reverse-stems of this word
@@ -119,26 +116,6 @@ fn fill_other_containers_alias_maps_with_prefixes(
         let _alias_score = aliases_map
             .entry(normalized_word.to_string())
             .or_insert(PREFIX_SCORE - ((chars.len() - n).try_into().unwrap_or(0)));
-    }
-}
-
-fn fill_other_containers_alias_maps_with_fuzzy_matches(
-    containers: &mut HashMap<String, Container>,
-    normalized_word: &str,
-) {
-    let fuzzies = reverse_levenshtein::transform_word(
-        normalized_word,
-        &reverse_levenshtein::generate_transformations(normalized_word.len(), 1),
-    );
-    for fuzzy_word in fuzzies {
-        let aliases_map = &mut containers
-            .entry(fuzzy_word.clone())
-            .or_insert_with(Container::new)
-            .aliases;
-
-        let _alias_score = aliases_map
-            .entry(normalized_word.to_string())
-            .or_insert(PREFIX_SCORE - 1);
     }
 }
 

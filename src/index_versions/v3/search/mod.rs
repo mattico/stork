@@ -1,4 +1,4 @@
-use super::scores::STOPWORD_SCORE;
+use super::scores::{FUZZY_SCORE, STOPWORD_SCORE};
 use super::structs::{AliasTarget, Container, Entry, EntryIndex, Index, Score, SearchResult};
 use crate::common::STOPWORDS;
 use crate::searcher::{OutputEntry, OutputResult, SearchOutput};
@@ -10,6 +10,8 @@ use intermediate_excerpt::IntermediateExcerpt;
 mod entry_and_intermediate_excerpts;
 use entry_and_intermediate_excerpts::EntryAndIntermediateExcerpts;
 
+pub mod reverse_levenshtein;
+
 pub fn search(index: &Index, query: &str) -> SearchOutput {
     let normalized_query = query.to_lowercase();
     let words_in_query: Vec<String> = normalized_query
@@ -17,9 +19,20 @@ pub fn search(index: &Index, query: &str) -> SearchOutput {
         .map(ToString::to_string)
         .collect();
 
+    let mut words_to_look_up = words_in_query.clone();
+
+    for word in &words_in_query {
+        let mut fuzzy_matches = reverse_levenshtein::transform_word(
+            &word,
+            &reverse_levenshtein::generate_transformations(word.len(), 2),
+        );
+        words_to_look_up.append(&mut fuzzy_matches);
+    }
+
     // Get the containers for each word in the query, and separate them
     // into intermediate excerpts
-    let mut intermediate_excerpts: Vec<IntermediateExcerpt> = words_in_query
+    println!("{}", words_to_look_up.len());
+    let mut intermediate_excerpts: Vec<IntermediateExcerpt> = words_to_look_up
         .iter()
         .flat_map(|word| index.containers.get_key_value(word))
         .map(|(word, ctr)| ContainerWithQuery::new(ctr.to_owned(), word))
@@ -27,6 +40,10 @@ pub fn search(index: &Index, query: &str) -> SearchOutput {
         .collect();
 
     for mut ie in &mut intermediate_excerpts {
+        if !words_in_query.contains(&ie.query) {
+            ie.score = FUZZY_SCORE
+        }
+
         if STOPWORDS.contains(&ie.query.as_str()) {
             ie.score = STOPWORD_SCORE;
         }

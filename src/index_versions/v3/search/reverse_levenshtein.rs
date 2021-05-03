@@ -1,7 +1,7 @@
-use std::{convert::TryInto, slice::Iter};
 use Transformation::*;
+
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub(super) enum Transformation {
+pub enum Transformation {
     Noop,
     Insert(char),
     Delete,
@@ -16,8 +16,7 @@ impl Transformation {
             .into_iter()
             .map(|char| Insert(char))
             .collect();
-        let mut replacements: Vec<Transformation> = letters
-            .clone()
+        let mut replacements: Vec<Transformation> = letters //     .clone()
             .into_iter()
             .map(|char| Replace(char))
             .collect();
@@ -61,22 +60,18 @@ fn r_add_transformation(
     }
 }
 
-pub(super) fn generate_transformations(len: usize, thresh: u8) -> Vec<Vec<Transformation>> {
+pub fn generate_transformations(len: usize, thresh: u8) -> Vec<Vec<Transformation>> {
     let mut transformations: Vec<Vec<Transformation>> = Vec::new();
 
     let mut base: Vec<Transformation> = Vec::new();
     base.resize(len, Transformation::Noop);
 
-    println!("41 {:?}", base);
     r_add_transformation(base, 0, thresh, &mut transformations);
 
     transformations
 }
 
-pub(super) fn transform_word(
-    word: &str,
-    transformations: &Vec<Vec<Transformation>>,
-) -> Vec<String> {
+pub fn transform_word(word: &str, transformations: &Vec<Vec<Transformation>>) -> Vec<String> {
     let mut transformed_words: Vec<String> = vec![];
     for word_transformation in transformations {
         let mut transformed: Vec<char> = word.clone().chars().collect();
